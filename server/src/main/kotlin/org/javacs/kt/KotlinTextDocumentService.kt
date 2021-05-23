@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture
 
 class KotlinTextDocumentService(
     private val sf: SourceFiles,
-    private val sp: SourcePath,
+    internal val sp: SourcePath,
     private val config: Configuration,
     private val tempDirectory: TemporaryDirectory,
     private val uriContentProvider: URIContentProvider
@@ -171,10 +171,9 @@ class KotlinTextDocumentService(
         LOG.info("Find symbols in {}", describeURI(params.textDocument.uri))
 
         reportTime {
-            val uri = parseURI(params.textDocument.uri)
-            val parsed = sp.parsedFile(uri)
+            val parsed = sp.parsedFile(parseURI(params.textDocument.uri))
 
-            documentSymbols(parsed)
+            documentSymbols(config.client, parsed)
         }
     }
 

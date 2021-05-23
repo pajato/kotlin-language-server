@@ -121,7 +121,7 @@ private class CompilationEnvironment(
 
                 addJvmClasspathRoots(classPath.map { it.toFile() })
                 addJavaSourceRoots(javaSourcePath.map { it.toFile() })
-
+                put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
                 // Setup script templates (e.g. used by Gradle's Kotlin DSL)
                 val scriptDefinitions: MutableList<ScriptDefinition> = mutableListOf(ScriptDefinition.getDefault(defaultJvmScriptingHostConfiguration))
 

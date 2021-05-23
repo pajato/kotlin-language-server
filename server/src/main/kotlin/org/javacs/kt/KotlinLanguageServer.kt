@@ -13,7 +13,6 @@ import org.javacs.kt.util.TemporaryDirectory
 import org.javacs.kt.util.parseURI
 import org.javacs.kt.progress.Progress
 import org.javacs.kt.progress.LanguageClientProgress
-import java.net.URI
 import java.io.Closeable
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -86,16 +85,15 @@ class KotlinLanguageServer : LanguageServer, LanguageClientAware, Closeable {
         serverCapabilities.executeCommandProvider = ExecuteCommandOptions(ALL_COMMANDS)
 
         val clientCapabilities = params.capabilities
+        config.client.setClientCapabilitiesOneTimeOnly(clientCapabilities)
         config.completion.snippets.enabled = clientCapabilities?.textDocument?.completion?.completionItem?.snippetSupport ?: false
 
         if (clientCapabilities?.window?.workDoneProgress ?: false) {
             progressFactory = LanguageClientProgress.Factory(client)
         }
 
-        @Suppress("DEPRECATION")
         val folders = params.workspaceFolders?.takeIf { it.isNotEmpty() }
             ?: params.rootUri?.let(::WorkspaceFolder)?.let(::listOf)
-            ?: params.rootPath?.let(Paths::get)?.toUri()?.toString()?.let(::WorkspaceFolder)?.let(::listOf)
             ?: listOf()
 
         val progress = params.workDoneToken?.let { LanguageClientProgress("Workspace folders", it, client) }
