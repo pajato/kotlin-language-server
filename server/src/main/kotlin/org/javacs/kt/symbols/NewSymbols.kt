@@ -1,16 +1,15 @@
 package org.javacs.kt.symbols
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.eclipse.lsp4j.DocumentSymbol
 import org.eclipse.lsp4j.SymbolInformation
 import org.eclipse.lsp4j.SymbolKind
 import org.eclipse.lsp4j.SymbolKind.*
+import org.eclipse.lsp4j.SymbolKind.Function
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.javacs.kt.ClientConfiguration
 import org.javacs.kt.position.range
-import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtDotQualifiedExpressionElementType
 
@@ -60,22 +59,16 @@ internal fun PsiElement.pickHierarchyElements(kindsSupported: List<SymbolKind>):
         is KtCallExpression -> ElementInfo(getName(this), Function, className)
         is KtDotQualifiedExpression -> this.getElementInfo(className)
         is KtDotQualifiedExpressionElementType -> null
-        is KtTypeArgumentList -> ElementInfo(this.getAncestorName(), Function, className)
+        is KtTypeArgumentList -> this.getElementInfo(className)
         is KtTypeProjection -> ElementInfo(this.text, Function, className)
         is KtTypeReference -> null
         is KtUserType -> null
+        is KtOperationReferenceExpression -> null
+        is KtBinaryExpression -> null
+        is KtContainerNode -> this.getElementInfo(className)
+        is KtIfExpression -> this.getElementInfo(className)
         else -> throw IllegalStateException("Unsupported type: $className in <${this.parent.text}>")
     }
 
     return if (result != null && kindsSupported.contains(result.kind)) result else null
-}
-
-internal tailrec fun PsiElement.getAncestorName(): String = when (val parent: PsiElement = this.parent) {
-    is KtNamedDeclaration -> parent.nameAsSafeName.asString()
-    else -> parent.getAncestorName()
-}
-
-internal fun PsiElement.getSelectionRange(): TextRange = when (this) {
-    is KtPackageDirective -> if (this.children.isNotEmpty()) this.children[0].textRange else this.textRange
-    else -> this.textRange
 }
