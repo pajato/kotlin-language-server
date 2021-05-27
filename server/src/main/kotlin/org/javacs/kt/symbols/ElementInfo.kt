@@ -21,6 +21,30 @@ private tailrec fun PsiElement.getAncestorKind(parent: PsiElement?): SymbolKind?
     else -> parent.getAncestorKind(this.parent)
 }
 
+internal fun KtPackageDirective.getElementInfo(className: String): ElementInfo {
+    val name = this.name
+    val kind = SymbolKind.Package
+    return ElementInfo(name, kind, className)
+}
+
+internal fun KtDotQualifiedExpression.getElementInfo(className: String) = when (this.parent) {
+    is KtPackageDirective -> ElementInfo(this.text, SymbolKind.Package, className)
+    else -> null
+}
+
+internal fun getElementInfo(element: PsiElement, className: String): ElementInfo? {
+    fun getName() = element.run { getAncestorName(parent) }
+
+    fun getKind() = when (val parent = element.parent) {
+        is KtPackageDirective -> SymbolKind.Package
+        else -> element.run { getAncestorKind(parent) }
+    }
+
+    val name = getName()
+    val kind = getKind()
+    return if (name.isEmpty() || kind == null) null else ElementInfo(name, kind, className)
+}
+
 internal fun PsiElement.getSelectionRange(): TextRange = when (this) {
     is KtPackageDirective -> if (this.children.isNotEmpty()) this.children[0].textRange else this.textRange
     else -> this.textRange
@@ -40,12 +64,6 @@ private fun getNameAndKind(element: PsiElement, className: String) = when (eleme
 
 internal fun KtBlockExpression.getElementInfo(className: String) : ElementInfo {
     val (name, kind) = getNameAndKind(this, className)
-    return ElementInfo(name, kind, className)
-}
-
-internal fun KtPackageDirective.getElementInfo(className: String): ElementInfo {
-    val name = this.name
-    val kind = SymbolKind.Package
     return ElementInfo(name, kind, className)
 }
 
@@ -78,28 +96,4 @@ internal fun KtStringTemplateExpression.getElementInfo(className: String) = when
 internal fun KtParameterList.getElementInfo(className: String) = when (this.parent) {
     is KtNamedFunction -> ElementInfo(this.text, SymbolKind.Function, className)
     else -> null
-}
-
-internal fun KtDotQualifiedExpression.getElementInfo(className: String) = when (this.parent) {
-    is KtPackageDirective -> ElementInfo(this.text, SymbolKind.Package, className)
-    else -> null
-}
-
-internal fun KtIfExpression.getElementInfo(className: String) = when (this.parent) {
-    is KtProperty -> ElementInfo(this.parent.text, SymbolKind.Property, className)
-    else -> null
-}
-
-internal fun KtContainerNode.getElementInfo(className: String): ElementInfo? {
-    val kind = this.getAncestorKind(this.parent)
-    return if (kind == null) null else when (this.parent) {
-        is KtIfExpression -> ElementInfo(this.parent.text, kind, className)
-        else -> null
-    }
-}
-
-internal fun KtTypeArgumentList.getElementInfo(className: String): ElementInfo? {
-    val name = getAncestorName(this.parent)
-    val kind = getAncestorKind(this.parent)
-    return if (name.isEmpty() || kind == null) null else ElementInfo(name, kind, className)
 }

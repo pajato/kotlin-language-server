@@ -59,15 +59,21 @@ internal fun PsiElement.pickHierarchyElements(kindsSupported: List<SymbolKind>):
         is KtCallExpression -> ElementInfo(getName(this), Function, className)
         is KtDotQualifiedExpression -> this.getElementInfo(className)
         is KtDotQualifiedExpressionElementType -> null
-        is KtTypeArgumentList -> this.getElementInfo(className)
+        is KtTypeArgumentList -> getElementInfo(this, className)
         is KtTypeProjection -> ElementInfo(this.text, Function, className)
         is KtTypeReference -> null
         is KtUserType -> null
         is KtOperationReferenceExpression -> null
         is KtBinaryExpression -> null
-        is KtContainerNode -> this.getElementInfo(className)
-        is KtIfExpression -> this.getElementInfo(className)
-        else -> throw IllegalStateException("Unsupported type: $className in <${this.parent.text}>")
+        is KtContainerNode -> getElementInfo(this, className)
+        is KtIfExpression -> getElementInfo(this, className)
+        is KtPostfixExpression -> getElementInfo(this, className)
+        is KtWhenConditionWithExpression -> null
+        is KtWhenEntry -> null
+        is KtSimpleNameStringTemplateEntry -> null
+        is KtWhenExpression -> getElementInfo(this, className)
+        else ->
+            throw IllegalStateException("Unsupported type: $className in <${this.parent.text}>")
     }
 
     return if (result != null && kindsSupported.contains(result.kind)) result else null
